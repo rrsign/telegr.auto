@@ -1,51 +1,54 @@
-import requests
+import aiohttp
 from bs4 import BeautifulSoup
-from transformers import pipeline
-from telegram.ext import Updater, CommandHandler
-import config
+from aiogram import Bot
+from transformers import pipeline, MarianMTModel, MarianTokenizer
+import asyncio
 
-# Функция для парсинга новостного сайта
-def parse_news_site(url):
-    response = requests.get(url)
-    soup = BeautifulSoup(response.text, 'html.parser')
-    articles = soup.find_all('article')
+# Конфигурация
+TELEGRAM_TOKEN = '7475279076:AAF8tUpp3SdqWglWVDJf5MFAFzuNb-SGCQ0'
+CHANNEL_ID = '-1002248988846'
+URL = 'https://habr.com/ru/news/822725/'
 
-    news = []
-    for article in articles:
-        title = article.find('h2').text
-        summary = article.find('p').text
-        news.append({'title': title, 'summary': summary})
+# Инициализация моделей
+generator = pipeline('text-generation', model='gpt2')
+model_name = 'Helsinki-NLP/opus-mt-ru-en'
+translate_model = MarianMTModel.from_pretrained(model_name)
+translate_tokenizer = MarianTokenizer.from_pretrained(model_name)
 
-    return news
+async def parse_content(session, url):
+    async with session.get(url) as response:
+        soup = BeautifulSoup(await response.text(), 'html.parser')
+        title = soup.find('h1', class_='tm-article-snippet__title_h1').text.strip()
+        first_paragraph = soup.find('div', class_='tm-article-body').find('p').text.strip()
+        return title, first_paragraph
 
-# Функция для обработки текста
-def process_text(text):
-    # Перевод текста
-    translator = pipeline("translation", model="Helsinki-NLP/opus-mt-ru-en")
-    translated = translator(text, max_length=512)[0]['translation_text']
+async def change_tone(text):
+    result = generator(text, max_length=100, num_return_sequences=1)
+    return result[0]['generated_text']
 
-    # Определение темы
-    classifier = pipeline("text-classification", model="distilbert-base-uncased-finetuned-sst-2-english")
-    sentiment = classifier(translated)[0]['label']
+async def translate_text(text):
+    inputs = translate_tokenizer.encode(text, return_tensors='pt')
+    outputs = translate_model.generate(inputs, max_length=400, num_return_sequences=1)
+    return translate_tokenizer.decode(outputs[0], skip_special_tokens=True)
 
-    # Генерация ключевых фраз
-    summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
-    summary = summarizer(translated, max_length=130, min_length=30, do_sample=False)[0]['summary_text']
+async def add_key_phrases(text):
+    return text + "\n\nКлючевые фразы: ..."
 
-    return f"Перевод: {translated}\\nТема: {sentiment}\\nКлючевые моменты: {summary}"
+async def process_content(title, first_paragraph):
+    title_task = asyncio.create_task(change_tone(title))
+    paragraph_task = asyncio.create_task(translate_text(first_paragraph))
+    title = await title_task
+    first_paragraph = await paragraph_task
+    return title, await add_key_phrases(first_paragraph)
 
-# Функция для отправки сообщения в Telegram
-def send_to_telegram(update, context):
-    news = parse_news_site('<https://example.com/news>')
-    for item in news:
-        processed = process_text(item['summary'])
-        context.bot.send_message(chat_id=update.effective_chat.id, text=processed)
+async def main():
+    async with aiohttp.ClientSession() as session:
+        bot = Bot(token=TELEGRAM_TOKEN)
+        title, first_paragraph = await parse_content(session, URL)
+        title, first_paragraph = await process_content(title, first_paragraph)
+        message = f"{title}\n\n{first_paragraph}"
+        await bot.send_message(chat_id=CHANNEL_ID, text=message)
 
-# Настройка бота
-updater = Updater(token=config.TELEGRAM_TOKEN, use_context=True)
-dispatcher = updater.dispatcher
-dispatcher.add_handler(CommandHandler('news', send_to_telegram))
-
-updater.start_polling()
-updater.idle()
+if __name__ == '__main__':
+    asyncio.run(main())
 

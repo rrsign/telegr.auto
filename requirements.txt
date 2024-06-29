@@ -1,0 +1,4 @@
+aiohttp==3.8.4
+beautifulsoup4==4.12.2
+aiogram==2.25.1
+transformers==4.30.2

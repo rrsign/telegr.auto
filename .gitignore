@@ -1,0 +1,58 @@
+# Виртуальное окружение
+mybot_env/
+venv/
+env/
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+
+# PyCharm
+.idea/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Файлы с конфиденциальной информацией
+.env
+config.ini
+secrets.json
+
+# Логи
+*.log
+
+# Временные файлы
+*.tmp
+*.bak
+*.swp
+
+# Файлы базы данных
+*.db
+*.sqlite3
+
+# Папки с собранными статическими файлами или кэшем
+static/
+.cache/
+
+# Файлы Jupyter Notebook
+.ipynb_checkpoints
+
+# Файлы pytest
+.pytest_cache/
+
+# Файлы coverage
+.coverage
+htmlcov/
+
+# Файлы дистрибуции
+dist/
+build/
+*.egg-info/
+
+#перенос idea
+.idea/
+
