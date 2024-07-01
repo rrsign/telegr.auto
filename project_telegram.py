@@ -5,7 +5,6 @@ from transformers import pipeline, MarianMTModel, MarianTokenizer
 import asyncio
 import torch
 import os
-from dotenv import load_dotenv
 
 # Загрузка переменных окружения
 load_dotenv()
