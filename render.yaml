@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: telegram.auto
+    env: docker
+    repo: https://github.com/rrsign/telegr.auto
+    branch: main
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: PORT
+        value: 8080
