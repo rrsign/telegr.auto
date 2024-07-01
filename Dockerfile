@@ -12,7 +12,6 @@ RUN apt-get update && apt-get install -y \
 # Копирование файлов проекта
 COPY requirements.txt .
 COPY project_telegram.py .
-COPY .env .
 
 # Установка зависимостей Python
 RUN pip install --no-cache-dir -r requirements.txt
