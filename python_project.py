@@ -1,18 +1,28 @@
+import os
 import aiohttp
 from bs4 import BeautifulSoup
 from aiogram import Bot, Dispatcher
 from transformers import pipeline, MarianMTModel, MarianTokenizer
 import asyncio
 import torch
-import os
-
-# Загрузка переменных окружения
-load_dotenv()
 
 # Конфигурация
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 CHANNEL_ID = os.getenv('CHANNEL_ID')
 URL = os.getenv('URL')
+
+# Проверка наличия необходимых переменных окружения
+required_env_vars = ['TELEGRAM_TOKEN', 'CHANNEL_ID', 'URL']
+for var in required_env_vars:
+    if not os.getenv(var):
+        raise EnvironmentError(f"Ошибка: Переменная окружения {var} не найдена")
+
+# Вывод для отладки (можно убрать в production)
+print("TELEGRAM_TOKEN:", TELEGRAM_TOKEN)
+print("CHANNEL_ID:", CHANNEL_ID)
+print("URL:", URL)
+
+# Остальной код остается без изменений
 
 # Проверка наличия GPU
 device = "cuda" if torch.cuda.is_available() else "cpu"
